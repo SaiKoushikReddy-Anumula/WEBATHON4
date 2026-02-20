@@ -38,12 +38,12 @@ exports.updateProfile = async (req, res) => {
 
 exports.searchUsers = async (req, res) => {
   try {
-    const { skills, availability } = req.query;
+    const { skills, availability, minProjects, maxProjects } = req.query;
     
     const query = { isVerified: true };
     
     if (skills) {
-      const skillArray = skills.split(',');
+      const skillArray = skills.split(',').map(s => s.trim());
       query['profile.skills.name'] = { $in: skillArray };
     }
     
@@ -51,9 +51,18 @@ exports.searchUsers = async (req, res) => {
       query['profile.availability'] = availability;
     }
     
+    if (minProjects) {
+      query.activeProjectCount = { $gte: parseInt(minProjects) };
+    }
+    
+    if (maxProjects) {
+      query.activeProjectCount = { ...query.activeProjectCount, $lte: parseInt(maxProjects) };
+    }
+    
     const users = await User.find(query)
       .select('-password')
-      .limit(20);
+      .sort({ activeProjectCount: -1 })
+      .limit(50);
     
     res.json(users);
   } catch (error) {

@@ -8,8 +8,10 @@ router.get('/', protect, projectController.getProjects);
 router.get('/recommendations', protect, projectController.getRecommendations);
 router.get('/:id', protect, projectController.getProject);
 router.put('/:id', protect, projectController.updateProject);
+router.delete('/:id', protect, projectController.deleteProject);
 router.post('/:id/apply', protect, projectController.applyToProject);
 router.post('/applications/handle', protect, projectController.handleApplication);
+router.post('/:id/remove-member', protect, projectController.removeMember);
 router.get('/:id/suggestions', protect, projectController.getMatchingSuggestions);
 
 module.exports = router;

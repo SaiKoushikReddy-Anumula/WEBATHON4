@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
 const ProjectDetails = () => {
   const { id } = useParams();
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [activeTab, setActiveTab] = useState('details');
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [removeMemberId, setRemoveMemberId] = useState(null);
+  const [removeReason, setRemoveReason] = useState('');
+  const [viewingProfile, setViewingProfile] = useState(null);
 
   useEffect(() => {
     fetchProject();
@@ -18,6 +24,11 @@ const ProjectDetails = () => {
     try {
       const { data } = await api.get(`/projects/${id}`);
       setProject(data);
+      setEditData({
+        teamSize: data.teamSize,
+        status: data.status,
+        deadline: data.deadline.split('T')[0]
+      });
       
       if (data.host._id === user.id) {
         fetchSuggestions();
@@ -59,6 +70,48 @@ const ProjectDetails = () => {
     }
   };
 
+  const handleUpdateProject = async () => {
+    try {
+      await api.put(`/projects/${id}`, editData);
+      setEditing(false);
+      fetchProject();
+      alert('Project updated successfully');
+    } catch (error) {
+      alert('Failed to update project');
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (window.confirm('Are you sure you want to terminate this project? All members will be notified.')) {
+      try {
+        await api.delete(`/projects/${id}`);
+        alert('Project terminated successfully');
+        navigate('/dashboard');
+      } catch (error) {
+        alert('Failed to terminate project');
+      }
+    }
+  };
+
+  const handleRemoveMember = async () => {
+    if (!removeReason.trim()) {
+      alert('Please provide a reason for removal');
+      return;
+    }
+    try {
+      await api.post(`/projects/${id}/remove-member`, {
+        memberId: removeMemberId,
+        reason: removeReason
+      });
+      setRemoveMemberId(null);
+      setRemoveReason('');
+      fetchProject();
+      alert('Member removed successfully');
+    } catch (error) {
+      alert('Failed to remove member');
+    }
+  };
+
   if (!project) return <div className="p-6">Loading...</div>;
 
   const isHost = project.host._id === user.id;
@@ -69,27 +122,48 @@ const ProjectDetails = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="container mx-auto max-w-6xl">
         <div className="bg-white rounded-lg shadow-md p-8">
+          <button onClick={() => navigate(-1)} className="mb-4 text-gray-600 hover:text-blue-600">
+            ← Back
+          </button>
           <div className="flex justify-between items-start mb-6">
             <div>
               <h2 className="text-3xl font-bold mb-2">{project.title}</h2>
               <p className="text-gray-600">Host: {project.host.profile.name}</p>
             </div>
-            {!isHost && !isMember && !hasApplied && (
-              <button
-                onClick={handleApply}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Apply
-              </button>
-            )}
-            {isMember && (
-              <Link
-                to={`/workspace/${id}`}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-              >
-                Open Workspace
-              </Link>
-            )}
+            <div className="flex gap-2">
+              {!isHost && !isMember && !hasApplied && (
+                <button
+                  onClick={handleApply}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Apply
+                </button>
+              )}
+              {isMember && (
+                <Link
+                  to={`/workspace/${id}`}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
+                  Open Workspace
+                </Link>
+              )}
+              {isHost && (
+                <>
+                  <button
+                    onClick={() => setEditing(!editing)}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
+                  >
+                    {editing ? 'Cancel' : 'Edit'}
+                  </button>
+                  <button
+                    onClick={handleDeleteProject}
+                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                  >
+                    Terminate
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="border-b mb-6">
@@ -121,6 +195,48 @@ const ProjectDetails = () => {
 
           {activeTab === 'details' && (
             <div className="space-y-6">
+              {editing && isHost ? (
+                <div className="bg-yellow-50 p-4 rounded-lg space-y-4">
+                  <h3 className="font-semibold text-lg">Edit Project</h3>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Team Size</label>
+                    <input
+                      type="number"
+                      value={editData.teamSize}
+                      onChange={(e) => setEditData({ ...editData, teamSize: parseInt(e.target.value) })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Status</label>
+                    <select
+                      value={editData.status}
+                      onChange={(e) => setEditData({ ...editData, status: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    >
+                      <option value="Open">Open</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-2">Deadline</label>
+                    <input
+                      type="date"
+                      value={editData.deadline}
+                      onChange={(e) => setEditData({ ...editData, deadline: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  <button
+                    onClick={handleUpdateProject}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              ) : null}
+              
               <div>
                 <h3 className="font-semibold text-lg mb-2">Description</h3>
                 <p className="text-gray-700">{project.description}</p>
@@ -157,6 +273,22 @@ const ProjectDetails = () => {
               </div>
 
               <div>
+                <h3 className="font-semibold mb-2">Team Members</h3>
+                <p className="text-gray-700 mb-2">{project.members.length}/{project.teamSize} members</p>
+                <div className="bg-gray-100 rounded-lg p-3">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full" 
+                      style={{ width: `${(project.members.length / project.teamSize) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {project.teamSize - project.members.length} slots remaining
+                  </p>
+                </div>
+              </div>
+
+              <div>
                 <h3 className="font-semibold mb-2">Required Roles</h3>
                 <div className="flex flex-wrap gap-2">
                   {project.requiredRoles.map((role, i) => (
@@ -171,15 +303,56 @@ const ProjectDetails = () => {
                 <h3 className="font-semibold mb-2">Team Members</h3>
                 <div className="space-y-2">
                   {project.members.map((member) => (
-                    <div key={member._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded">
+                    <div key={member._id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded">
                       <div>
                         <p className="font-semibold">{member.profile.name}</p>
                         <p className="text-sm text-gray-600">@{member.username}</p>
                       </div>
+                      {isHost && member._id !== project.host._id && (
+                        <button
+                          onClick={() => setRemoveMemberId(member._id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
+
+              {removeMemberId && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                    <h3 className="text-xl font-bold mb-4">Remove Member</h3>
+                    <p className="text-gray-600 mb-4">Please provide a reason for removing this member:</p>
+                    <textarea
+                      value={removeReason}
+                      onChange={(e) => setRemoveReason(e.target.value)}
+                      placeholder="Reason for removal..."
+                      className="w-full px-3 py-2 border rounded-lg mb-4"
+                      rows="3"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleRemoveMember}
+                        className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+                      >
+                        Confirm Remove
+                      </button>
+                      <button
+                        onClick={() => {
+                          setRemoveMemberId(null);
+                          setRemoveReason('');
+                        }}
+                        className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -188,18 +361,33 @@ const ProjectDetails = () => {
               {project.applications.filter(a => a.status === 'Pending').map((app) => (
                 <div key={app.user._id} className="border p-4 rounded-lg">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">{app.user.profile.name}</h4>
-                      <p className="text-sm text-gray-600">@{app.user.username}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {app.user.profile.skills?.slice(0, 5).map((skill, i) => (
-                          <span key={i} className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
-                            {skill.name} - {skill.proficiency}
-                          </span>
-                        ))}
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xl font-bold">
+                        {app.user.profile.profilePicture ? (
+                          <img src={app.user.profile.profilePicture} alt={app.user.profile.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          app.user.profile.name?.charAt(0)?.toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">{app.user.profile.name}</h4>
+                        <p className="text-sm text-gray-600">@{app.user.username}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {app.user.profile.skills?.slice(0, 5).map((skill, i) => (
+                            <span key={i} className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
+                              {skill.name} - {skill.proficiency}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => setViewingProfile(app.user)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      >
+                        View Profile
+                      </button>
                       <button
                         onClick={() => handleApplication(app.user._id, 'accept')}
                         className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -228,20 +416,35 @@ const ProjectDetails = () => {
               {suggestions.map((candidate, index) => (
                 <div key={candidate.user._id} className="border p-4 rounded-lg">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold">#{index + 1} {candidate.user.profile.name}</h4>
-                      <p className="text-sm text-gray-600">@{candidate.user.username}</p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Match Score: {(candidate.score * 100).toFixed(1)}%
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {candidate.user.profile.skills?.slice(0, 5).map((skill, i) => (
-                          <span key={i} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                            {skill.name} - {skill.proficiency}
-                          </span>
-                        ))}
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white text-xl font-bold">
+                        {candidate.user.profile.profilePicture ? (
+                          <img src={candidate.user.profile.profilePicture} alt={candidate.user.profile.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          candidate.user.profile.name?.charAt(0)?.toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">#{index + 1} {candidate.user.profile.name}</h4>
+                        <p className="text-sm text-gray-600">@{candidate.user.username}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Match Score: {(candidate.score * 100).toFixed(1)}%
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {candidate.user.profile.skills?.slice(0, 5).map((skill, i) => (
+                            <span key={i} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                              {skill.name} - {skill.proficiency}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setViewingProfile(candidate.user)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    >
+                      View Profile
+                    </button>
                   </div>
                 </div>
               ))}
@@ -252,6 +455,71 @@ const ProjectDetails = () => {
           )}
         </div>
       </div>
+
+      {viewingProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold">User Profile</h2>
+              <button onClick={() => setViewingProfile(null)} className="text-gray-600 hover:text-gray-800 text-2xl">×</button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
+                {viewingProfile.profile.profilePicture ? (
+                  <img src={viewingProfile.profile.profilePicture} alt={viewingProfile.profile.name} className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  viewingProfile.profile.name?.charAt(0)?.toUpperCase()
+                )}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">{viewingProfile.profile.name}</h3>
+                <p className="text-gray-600">@{viewingProfile.username}</p>
+                <p className="text-sm text-gray-500">{viewingProfile.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2">Bio</h4>
+                <p className="text-gray-700">{viewingProfile.profile.bio || 'No bio provided'}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Details</h4>
+                <p className="text-sm text-gray-700">Branch: {viewingProfile.profile.branch || 'N/A'}</p>
+                <p className="text-sm text-gray-700">Year: {viewingProfile.profile.year || 'N/A'}</p>
+                <p className="text-sm text-gray-700">Availability: {viewingProfile.profile.availability}</p>
+                <p className="text-sm text-gray-700">Active Projects: {viewingProfile.activeProjectCount}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {viewingProfile.profile.skills?.map((skill, i) => (
+                    <span key={i} className="bg-purple-100 text-purple-800 px-3 py-1 rounded text-sm">
+                      {skill.name} - {skill.proficiency}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {viewingProfile.profile.workExperience?.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Work Experience</h4>
+                  {viewingProfile.profile.workExperience.map((exp, i) => (
+                    <div key={i} className="bg-gray-50 p-3 rounded mb-2">
+                      <p className="font-semibold">{exp.projectName}</p>
+                      <p className="text-sm text-gray-600">{exp.role} - {exp.duration}</p>
+                      <p className="text-sm text-gray-700">{exp.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

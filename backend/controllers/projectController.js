@@ -96,6 +96,75 @@ exports.updateProject = async (req, res) => {
   }
 };
 
+exports.deleteProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    if (project.host.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    // Notify all members
+    for (const memberId of project.members) {
+      if (memberId.toString() !== req.user._id.toString()) {
+        await Notification.create({
+          recipient: memberId,
+          type: 'project_update',
+          title: 'Project Terminated',
+          message: `The project "${project.title}" has been terminated by the host`,
+          link: '/dashboard'
+        });
+        
+        await User.findByIdAndUpdate(memberId, {
+          $inc: { activeProjectCount: -1 },
+          $pull: { currentProjects: project._id }
+        });
+      }
+    }
+    
+    await Project.findByIdAndDelete(req.params.id);
+    
+    res.json({ message: 'Project terminated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.removeMember = async (req, res) => {
+  try {
+    const { memberId, reason } = req.body;
+    const project = await Project.findById(req.params.id);
+    
+    if (!project || project.host.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    project.members = project.members.filter(m => m.toString() !== memberId);
+    await project.save();
+    
+    await User.findByIdAndUpdate(memberId, {
+      $inc: { activeProjectCount: -1 },
+      $pull: { currentProjects: project._id }
+    });
+    
+    await Notification.create({
+      recipient: memberId,
+      type: 'project_update',
+      title: 'Removed from Project',
+      message: `You have been removed from "${project.title}". Reason: ${reason || 'Not specified'}`,
+      link: '/dashboard'
+    });
+    
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.applyToProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);

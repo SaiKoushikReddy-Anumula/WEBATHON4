@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
 const Profile = () => {
   const { user, setUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
     name: '',
+    profilePicture: '',
     branch: '',
     year: '',
     bio: '',
@@ -52,20 +55,48 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-6">
       <div className="container mx-auto max-w-4xl">
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <button onClick={() => navigate(-1)} className="mb-4 text-gray-600 hover:text-blue-600 flex items-center">
+          ← Back
+        </button>
+        <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold">My Profile</h2>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">My Profile</h2>
             <button
               onClick={() => editing ? handleSave() : setEditing(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition"
             >
               {editing ? 'Save' : 'Edit'}
             </button>
           </div>
 
           <div className="space-y-6">
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                  {profile.profilePicture ? (
+                    <img src={profile.profilePicture} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    profile.name?.charAt(0)?.toUpperCase() || '?'
+                  )}
+                </div>
+              </div>
+              <div className="flex-1">
+                {editing && (
+                  <div>
+                    <label className="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
+                    <input
+                      type="text"
+                      value={profile.profilePicture}
+                      onChange={(e) => setProfile({ ...profile, profilePicture: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
             <div>
               <label className="block text-gray-700 font-semibold mb-2">Name</label>
               <input

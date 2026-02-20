@@ -11,6 +11,8 @@ import Profile from './pages/Profile';
 import CreateProject from './pages/CreateProject';
 import ProjectDetails from './pages/ProjectDetails';
 import Workspace from './pages/Workspace';
+import MyProjects from './pages/MyProjects';
+import SearchUsers from './pages/SearchUsers';
 
 function App() {
   return (
@@ -30,6 +32,18 @@ function App() {
           <Route path="/profile" element={
             <PrivateRoute>
               <Profile />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/my-projects" element={
+            <PrivateRoute>
+              <MyProjects />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/search-users" element={
+            <PrivateRoute>
+              <SearchUsers />
             </PrivateRoute>
           } />
           

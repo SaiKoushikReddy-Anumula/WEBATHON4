@@ -9,7 +9,8 @@ const projectSchema = new mongoose.Schema({
   teamSize: { type: Number, required: true },
   requiredRoles: [{
     role: { type: String, required: true },
-    count: { type: Number, default: 1 }
+    count: { type: Number, default: 1 },
+    filled: { type: Number, default: 0 }
   }],
   requiredSkills: [{
     skill: { type: String, required: true },
