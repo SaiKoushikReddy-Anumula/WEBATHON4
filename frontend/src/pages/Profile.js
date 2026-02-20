@@ -85,14 +85,30 @@ const Profile = () => {
               <div className="flex-1">
                 {editing && (
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Profile Picture URL</label>
+                    <label className="block text-gray-700 font-semibold mb-2">Profile Picture</label>
                     <input
                       type="text"
                       value={profile.profilePicture}
                       onChange={(e) => setProfile({ ...profile, profilePicture: e.target.value })}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full px-3 py-2 border rounded-lg"
+                      className="w-full px-3 py-2 border rounded-lg mb-2"
                     />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setProfile({ ...profile, profilePicture: reader.result });
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Upload image or paste URL</p>
                   </div>
                 )}
               </div>
@@ -205,8 +221,10 @@ const Profile = () => {
 
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h3 className="font-semibold mb-2">Statistics</h3>
-              <p>Active Projects: {user?.activeProjectCount || 0}</p>
-              <p>Selection Frequency: {user?.selectionFrequency || 0}</p>
+              <p>⭐ Contribution Score: {user?.contributionScore?.toFixed(1) || '3.0'}/5.0 ({user?.totalRatings || 0} ratings)</p>
+              <p>📊 Active Projects: {user?.activeProjectCount || 0}</p>
+              <p>✅ Completed Projects: {user?.completedProjectsCount || 0}</p>
+              <p>🎯 Selection Frequency: {user?.selectionFrequency || 0}</p>
             </div>
           </div>
         </div>

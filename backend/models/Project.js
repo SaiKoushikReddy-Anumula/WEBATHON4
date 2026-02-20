@@ -5,6 +5,7 @@ const projectSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, enum: ['Hackathon', 'Research', 'Startup', 'Academic', 'Other'], required: true },
   host: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  hostRole: { type: String, default: 'Project Lead' },
   
   teamSize: { type: Number, required: true },
   requiredRoles: [{
@@ -22,6 +23,15 @@ const projectSchema = new mongoose.Schema({
   status: { type: String, enum: ['Open', 'In Progress', 'Completed'], default: 'Open' },
   
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  memberRatings: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    rating: { type: Number, min: 1, max: 5 }
+  }],
+  invitations: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    status: { type: String, enum: ['Pending', 'Accepted', 'Rejected'], default: 'Pending' },
+    sentAt: { type: Date, default: Date.now }
+  }],
   applications: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     status: { type: String, enum: ['Pending', 'Accepted', 'Rejected'], default: 'Pending' },

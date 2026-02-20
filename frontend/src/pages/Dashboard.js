@@ -7,11 +7,13 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [filters, setFilters] = useState({ skills: '', category: '', role: '' });
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout } = useContext(AuthContext);
 
   useEffect(() => {
     fetchProjects();
     fetchRecommendations();
+    fetchUnreadCount();
   }, []);
 
   const fetchProjects = async () => {
@@ -32,6 +34,16 @@ const Dashboard = () => {
     }
   };
 
+  const fetchUnreadCount = async () => {
+    try {
+      const { data } = await api.get('/notifications');
+      const unread = data.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchProjects();
@@ -43,6 +55,14 @@ const Dashboard = () => {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Smart Campus</h1>
           <div className="flex gap-4 items-center">
+            <Link to="/notifications" className="relative text-gray-700 hover:text-blue-600 transition">
+              🔔 Notifications
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
             <Link to="/profile" className="text-gray-700 hover:text-blue-600 transition">Profile</Link>
             <Link to="/my-projects" className="text-gray-700 hover:text-blue-600 transition">My Projects</Link>
             <Link to="/search-users" className="text-gray-700 hover:text-blue-600 transition">Search Users</Link>

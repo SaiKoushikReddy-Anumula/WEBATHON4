@@ -13,5 +13,8 @@ router.post('/:id/apply', protect, projectController.applyToProject);
 router.post('/applications/handle', protect, projectController.handleApplication);
 router.post('/:id/remove-member', protect, projectController.removeMember);
 router.get('/:id/suggestions', protect, projectController.getMatchingSuggestions);
+router.post('/:id/invite', protect, projectController.sendInvitation);
+router.post('/invitations/respond', protect, projectController.respondToInvitation);
+router.post('/:id/rate-members', protect, projectController.rateMembers);
 
 module.exports = router;

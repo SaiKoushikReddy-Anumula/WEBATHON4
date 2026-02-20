@@ -38,12 +38,15 @@ exports.updateProfile = async (req, res) => {
 
 exports.searchUsers = async (req, res) => {
   try {
-    const { skills, availability, minProjects, maxProjects } = req.query;
+    const { skills, availability, minProjects, maxProjects, minScore, maxScore } = req.query;
     
     const query = { isVerified: true };
     
     if (skills) {
-      const skillArray = skills.split(',').map(s => s.trim());
+      const skillArray = skills.split(',').map(s => {
+        const normalized = s.trim().toLowerCase().replace(/\s+/g, '');
+        return new RegExp(normalized, 'i');
+      });
       query['profile.skills.name'] = { $in: skillArray };
     }
     
@@ -59,9 +62,17 @@ exports.searchUsers = async (req, res) => {
       query.activeProjectCount = { ...query.activeProjectCount, $lte: parseInt(maxProjects) };
     }
     
+    if (minScore) {
+      query.contributionScore = { $gte: parseFloat(minScore) };
+    }
+    
+    if (maxScore) {
+      query.contributionScore = { ...query.contributionScore, $lte: parseFloat(maxScore) };
+    }
+    
     const users = await User.find(query)
       .select('-password')
-      .sort({ activeProjectCount: -1 })
+      .sort({ contributionScore: -1, activeProjectCount: -1 })
       .limit(50);
     
     res.json(users);

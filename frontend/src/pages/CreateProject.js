@@ -10,7 +10,8 @@ const CreateProject = () => {
     category: 'Hackathon',
     teamSize: 3,
     deadline: '',
-    weeklyCommitment: ''
+    weeklyCommitment: '',
+    hostRole: ''
   });
   const [requiredSkills, setRequiredSkills] = useState([]);
   const [requiredRoles, setRequiredRoles] = useState([]);
@@ -52,6 +53,9 @@ const CreateProject = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="container mx-auto max-w-3xl">
         <div className="bg-white rounded-lg shadow-md p-8">
+          <button onClick={() => navigate(-1)} className="mb-4 text-gray-600 hover:text-blue-600">
+            ← Back
+          </button>
           <h2 className="text-3xl font-bold mb-6">Create New Project</h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -104,6 +108,17 @@ const CreateProject = () => {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">Your Role in Project</label>
+              <input
+                type="text"
+                placeholder="e.g., Team Lead, Backend Developer"
+                value={formData.hostRole}
+                onChange={(e) => setFormData({ ...formData, hostRole: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

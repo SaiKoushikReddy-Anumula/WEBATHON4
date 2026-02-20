@@ -32,7 +32,10 @@ const userSchema = new mongoose.Schema({
   
   selectionFrequency: { type: Number, default: 0 },
   activeProjectCount: { type: Number, default: 0 },
-  currentProjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }]
+  currentProjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
+  contributionScore: { type: Number, default: 3.0 },
+  totalRatings: { type: Number, default: 0 },
+  completedProjectsCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

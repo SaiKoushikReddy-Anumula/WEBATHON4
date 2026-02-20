@@ -13,6 +13,7 @@ import ProjectDetails from './pages/ProjectDetails';
 import Workspace from './pages/Workspace';
 import MyProjects from './pages/MyProjects';
 import SearchUsers from './pages/SearchUsers';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -44,6 +45,12 @@ function App() {
           <Route path="/search-users" element={
             <PrivateRoute>
               <SearchUsers />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/notifications" element={
+            <PrivateRoute>
+              <Notifications />
             </PrivateRoute>
           } />
           
