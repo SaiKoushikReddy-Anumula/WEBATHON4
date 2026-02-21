@@ -9,35 +9,31 @@ const MyProjects = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchMyProjects();
-  }, []);
-
-  const fetchMyProjects = async () => {
+  const fetchMyProjects = React.useCallback(async () => {
     try {
       const { data } = await api.get('/projects', {
         params: { status: '' }
       });
-      console.log('All projects fetched:', data.length);
-      console.log('Projects by status:', data.reduce((acc, p) => {
-        acc[p.status] = (acc[p.status] || 0) + 1;
-        return acc;
-      }, {}));
       
-      const myProjects = data.filter(p => 
-        (p.members.some(m => m._id === user.id) || p.host._id === user.id) && !p.deletedAt
-      );
-      console.log('My projects:', myProjects.length);
-      console.log('My projects by status:', myProjects.reduce((acc, p) => {
-        acc[p.status] = (acc[p.status] || 0) + 1;
-        return acc;
-      }, {}));
+      const userId = String(user._id || user.id);
+      
+      const myProjects = data.filter(p => {
+        const isMember = p.members.some(m => String(m._id) === userId);
+        const isHost = String(p.host._id) === userId;
+        const notDeleted = !p.deletedAt;
+        
+        return (isMember || isHost) && notDeleted;
+      });
       
       setProjects(myProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchMyProjects();
+  }, [fetchMyProjects]);
 
   const activeProjects = projects.filter(p => p.status !== 'Completed' && p.status !== 'Terminated');
   const completedProjects = projects.filter(p => p.status === 'Completed');
@@ -127,7 +123,7 @@ const MyProjects = () => {
                     <Link key={project._id} to={`/projects/${project._id}`} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 hover:border-blue-400 hover:shadow-blue-200 transition-all p-6 hover:scale-105">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-xl font-bold text-slate-800">{project.title}</h3>
-                        {project.host._id === user.id && (
+                        {String(project.host._id) === String(user._id || user.id) && (
                           <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-lg font-medium">Host</span>
                         )}
                       </div>
@@ -156,7 +152,7 @@ const MyProjects = () => {
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-xl font-bold text-slate-800">{project.title}</h3>
                         <div className="flex gap-2">
-                          {project.host._id === user.id && (
+                          {String(project.host._id) === String(user._id || user.id) && (
                             <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-lg font-medium">Host</span>
                           )}
                           <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-lg font-medium">✓ Done</span>

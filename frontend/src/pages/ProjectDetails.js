@@ -20,6 +20,7 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchProject = async () => {
@@ -32,7 +33,9 @@ const ProjectDetails = () => {
         deadline: data.deadline.split('T')[0]
       });
       
-      if (data.host._id === user.id) {
+      const userId = String(user._id || user.id);
+      const hostId = String(data.host._id);
+      if (hostId === userId) {
         fetchSuggestions();
       }
     } catch (error) {
@@ -100,12 +103,15 @@ const ProjectDetails = () => {
       try {
         await api.post(`/projects/${id}/end-project`);
         alert('Project marked as completed');
-        fetchProject();
+        await fetchProject();
         
         // Refresh user data to update statistics
         const { data: userData } = await api.get('/users/profile');
         localStorage.setItem('user', JSON.stringify(userData));
         window.dispatchEvent(new Event('userUpdated'));
+        
+        // Automatically open rating modal after project ends
+        setShowRatingModal(true);
       } catch (error) {
         alert(error.response?.data?.message || 'Failed to end project');
       }
@@ -163,11 +169,14 @@ const ProjectDetails = () => {
     }
   };
 
-  if (!project) return <div className="p-6">Loading...</div>;
+  if (!project || !user) return <div className="p-6">Loading...</div>;
 
-  const isHost = project.host._id === user.id;
-  const isMember = project.members.some(m => m._id === user.id);
-  const hasApplied = project.applications.some(a => a.user._id === user.id);
+  const userId = String(user._id || user.id);
+  const hostId = String(project.host._id);
+  const isHost = hostId === userId;
+  const isMember = project.members && project.members.some(m => String(m._id) === userId);
+  const hasApplied = project.applications && project.applications.some(a => a.user && String(a.user._id) === userId);
+  const canApply = project.status === 'Open' && !isHost && !isMember && !hasApplied;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -182,7 +191,7 @@ const ProjectDetails = () => {
               <p className="text-gray-600">Host: {project.host.profile.name}</p>
             </div>
             <div className="flex gap-2">
-              {!isHost && !isMember && !hasApplied && (
+              {canApply && (
                 <button
                   onClick={handleApply}
                   className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
@@ -190,7 +199,7 @@ const ProjectDetails = () => {
                   Apply
                 </button>
               )}
-              {isMember && (
+              {isMember && project.status !== 'Completed' && (
                 <Link
                   to={`/workspace/${id}`}
                   className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
@@ -200,19 +209,21 @@ const ProjectDetails = () => {
               )}
               {isHost && (
                 <>
-                  <button
-                    onClick={() => setEditing(!editing)}
-                    className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
-                  >
-                    {editing ? 'Cancel' : 'Edit'}
-                  </button>
                   {project.status !== 'Completed' && (
-                    <button
-                      onClick={handleEndProject}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                    >
-                      End Project
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setEditing(!editing)}
+                        className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
+                      >
+                        {editing ? 'Cancel' : 'Edit'}
+                      </button>
+                      <button
+                        onClick={handleEndProject}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                      >
+                        End Project
+                      </button>
+                    </>
                   )}
                   {project.status === 'Completed' && (
                     <button
@@ -222,12 +233,14 @@ const ProjectDetails = () => {
                       Rate Members
                     </button>
                   )}
-                  <button
-                    onClick={handleDeleteProject}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                  >
-                    Terminate
-                  </button>
+                  {project.status !== 'Completed' && (
+                    <button
+                      onClick={handleDeleteProject}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                    >
+                      Terminate
+                    </button>
+                  )}
                 </>
               )}
             </div>

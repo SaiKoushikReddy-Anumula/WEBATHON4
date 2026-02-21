@@ -62,13 +62,13 @@ const Profile = () => {
   useEffect(() => {
     refreshUserData();
 
-    // Listen for user updates from other components
     const handleUserUpdate = () => {
       refreshUserData();
     };
 
     window.addEventListener('userUpdated', handleUserUpdate);
     return () => window.removeEventListener('userUpdated', handleUserUpdate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addSkill = () => {

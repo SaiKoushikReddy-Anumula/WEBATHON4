@@ -47,19 +47,10 @@ exports.getProjects = async (req, res) => {
       query.status = 'Open';
     }
     
-    console.log('getProjects query:', JSON.stringify(query));
-    console.log('status param:', status);
-    
     const projects = await Project.find(query)
       .populate('host', 'username profile.name')
       .populate('members', 'username profile.name')
       .sort('-createdAt');
-    
-    console.log(`Found ${projects.length} projects`);
-    console.log('Projects by status:', projects.reduce((acc, p) => {
-      acc[p.status] = (acc[p.status] || 0) + 1;
-      return acc;
-    }, {}));
     
     res.json(projects);
   } catch (error) {
