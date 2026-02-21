@@ -6,7 +6,25 @@ exports.getNotifications = async (req, res) => {
       .sort('-createdAt')
       .limit(50);
     
+    // Mark all as read when viewing notifications
+    await Notification.updateMany(
+      { recipient: req.user._id, read: false },
+      { read: true }
+    );
+    
     res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getUnreadCount = async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      recipient: req.user._id,
+      read: false
+    });
+    res.json({ count });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

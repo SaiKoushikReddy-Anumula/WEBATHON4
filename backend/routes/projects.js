@@ -16,5 +16,6 @@ router.get('/:id/suggestions', protect, projectController.getMatchingSuggestions
 router.post('/:id/invite', protect, projectController.sendInvitation);
 router.post('/invitations/respond', protect, projectController.respondToInvitation);
 router.post('/:id/rate-members', protect, projectController.rateMembers);
+router.post('/:id/end-project', protect, projectController.endProject);
 
 module.exports = router;

@@ -5,21 +5,45 @@ exports.addTask = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     
-    if (!project || !project.members.includes(req.user._id)) {
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    if (!project.members.includes(req.user._id)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
-    project.workspace.tasks.push(req.body);
+    if (!project.workspace) {
+      project.workspace = {};
+    }
+    if (!project.workspace.tasks) {
+      project.workspace.tasks = [];
+    }
+    if (!project.workspace.activityLog) {
+      project.workspace.activityLog = [];
+    }
+    
+    const newTask = {
+      title: req.body.title,
+      description: req.body.description || '',
+      assignedTo: req.body.assignedTo || null,
+      status: 'To Do',
+      createdAt: new Date()
+    };
+    
+    project.workspace.tasks.push(newTask);
     project.workspace.activityLog.push({
       user: req.user._id,
-      action: `Created task: ${req.body.title}`
+      action: `Created task: ${req.body.title}`,
+      timestamp: new Date()
     });
     
     await project.save();
     
     res.json(project.workspace.tasks);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Add task error:', error);
+    res.status(500).json({ message: error.message, stack: error.stack });
   }
 };
 
@@ -61,6 +85,13 @@ exports.addMessage = async (req, res) => {
     
     const { threadName, content } = req.body;
     
+    if (!project.workspace) {
+      project.workspace = { threads: [], tasks: [], files: [], activityLog: [] };
+    }
+    if (!project.workspace.threads) {
+      project.workspace.threads = [];
+    }
+    
     let thread = project.workspace.threads.find(t => t.name === threadName);
     
     if (!thread) {
@@ -77,6 +108,7 @@ exports.addMessage = async (req, res) => {
     
     res.json(thread);
   } catch (error) {
+    console.error('Add message error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -92,8 +124,14 @@ exports.getWorkspace = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
+    if (!project.workspace) {
+      project.workspace = { threads: [], tasks: [], files: [], activityLog: [] };
+      await project.save();
+    }
+    
     res.json(project.workspace);
   } catch (error) {
+    console.error('Get workspace error:', error);
     res.status(500).json({ message: error.message });
   }
 };

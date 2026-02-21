@@ -95,6 +95,23 @@ const ProjectDetails = () => {
     }
   };
 
+  const handleEndProject = async () => {
+    if (window.confirm('Mark this project as completed? You can then rate team members.')) {
+      try {
+        await api.post(`/projects/${id}/end-project`);
+        alert('Project marked as completed');
+        fetchProject();
+        
+        // Refresh user data to update statistics
+        const { data: userData } = await api.get('/users/profile');
+        localStorage.setItem('user', JSON.stringify(userData));
+        window.dispatchEvent(new Event('userUpdated'));
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to end project');
+      }
+    }
+  };
+
   const handleRemoveMember = async () => {
     try {
       await api.post(`/projects/${id}/remove-member`, {
@@ -136,6 +153,11 @@ const ProjectDetails = () => {
       setRatings({});
       alert('Ratings submitted successfully');
       fetchProject();
+      
+      // Refresh user data to update statistics
+      const { data: userData } = await api.get('/users/profile');
+      localStorage.setItem('user', JSON.stringify(userData));
+      window.dispatchEvent(new Event('userUpdated'));
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to submit ratings');
     }
@@ -184,6 +206,14 @@ const ProjectDetails = () => {
                   >
                     {editing ? 'Cancel' : 'Edit'}
                   </button>
+                  {project.status !== 'Completed' && (
+                    <button
+                      onClick={handleEndProject}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                    >
+                      End Project
+                    </button>
+                  )}
                   {project.status === 'Completed' && (
                     <button
                       onClick={() => setShowRatingModal(true)}
@@ -364,7 +394,7 @@ const ProjectDetails = () => {
                           <p className="font-semibold">{member.profile.name}</p>
                           <p className="text-sm text-gray-600">@{member.username}</p>
                           {member.contributionScore && (
-                            <p className="text-xs text-yellow-600">⭐ {member.contributionScore.toFixed(1)}/5.0</p>
+                            <p className="text-xs text-yellow-600">⭐ {member.contributionScore}/5.0</p>
                           )}
                         </div>
                       </div>
@@ -483,7 +513,7 @@ const ProjectDetails = () => {
                           Match Score: {(candidate.score * 100).toFixed(1)}%
                         </p>
                         {candidate.user.contributionScore && (
-                          <p className="text-sm text-yellow-600">⭐ Contribution: {candidate.user.contributionScore.toFixed(1)}/5.0</p>
+                          <p className="text-sm text-yellow-600">⭐ Contribution: {candidate.user.contributionScore}/5.0</p>
                         )}
                         <div className="mt-2 flex flex-wrap gap-2">
                           {candidate.user.profile.skills?.slice(0, 5).map((skill, i) => (
@@ -535,7 +565,7 @@ const ProjectDetails = () => {
                         <h4 className="font-semibold">{member.profile.name}</h4>
                         <p className="text-sm text-gray-600">@{member.username}</p>
                         {member.contributionScore && (
-                          <p className="text-sm text-yellow-600">⭐ {member.contributionScore.toFixed(1)}/5.0</p>
+                          <p className="text-sm text-yellow-600">⭐ {member.contributionScore}/5.0</p>
                         )}
                         <div className="mt-2 flex flex-wrap gap-2">
                           {member.profile.skills?.slice(0, 5).map((skill, i) => (
@@ -606,7 +636,7 @@ const ProjectDetails = () => {
                 <p className="text-sm text-gray-700">Availability: {viewingProfile.profile.availability}</p>
                 <p className="text-sm text-gray-700">Active Projects: {viewingProfile.activeProjectCount}</p>
                 {viewingProfile.contributionScore && (
-                  <p className="text-sm text-yellow-600 font-semibold">⭐ Contribution Score: {viewingProfile.contributionScore.toFixed(1)}/5.0 ({viewingProfile.totalRatings || 0} ratings)</p>
+                  <p className="text-sm text-yellow-600 font-semibold">⭐ Contribution Score: {viewingProfile.contributionScore}/5.0 ({viewingProfile.totalRatings || 0} ratings)</p>
                 )}
               </div>
 
@@ -649,43 +679,52 @@ const ProjectDetails = () => {
             <p className="text-gray-600 mb-6">Rate each member's contribution to the project (1-5 stars)</p>
 
             <div className="space-y-4">
-              {project.members.filter(m => m._id !== project.host._id).map((member) => (
-                <div key={member._id} className="border p-4 rounded-lg">
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
-                      {member.profile.profilePicture ? (
-                        <img src={member.profile.profilePicture} alt={member.profile.name} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        member.profile.name?.charAt(0)?.toUpperCase()
+              {project.members.filter(m => m._id !== project.host._id).map((member) => {
+                const existingRating = project.memberRatings?.find(r => r.user.toString() === member._id);
+                const isRated = !!existingRating;
+                
+                return (
+                  <div key={member._id} className="border p-4 rounded-lg">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                        {member.profile.profilePicture ? (
+                          <img src={member.profile.profilePicture} alt={member.profile.name} className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          member.profile.name?.charAt(0)?.toUpperCase()
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">{member.profile.name}</h4>
+                        <p className="text-sm text-gray-600">@{member.username}</p>
+                        {isRated && (
+                          <p className="text-xs text-green-600 font-semibold">Already rated: {existingRating.rating}/5 ⭐</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-semibold">Rating:</label>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => !isRated && setRatings({ ...ratings, [member._id]: star })}
+                            disabled={isRated}
+                            className={`text-2xl ${
+                              (ratings[member._id] || existingRating?.rating || 0) >= star ? 'text-yellow-500' : 'text-gray-300'
+                            } ${isRated ? 'cursor-not-allowed opacity-60' : 'hover:text-yellow-400 cursor-pointer'}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      {(ratings[member._id] || existingRating?.rating) && (
+                        <span className="text-sm text-gray-600 ml-2">{ratings[member._id] || existingRating?.rating}/5</span>
                       )}
                     </div>
-                    <div>
-                      <h4 className="font-semibold">{member.profile.name}</h4>
-                      <p className="text-sm text-gray-600">@{member.username}</p>
-                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-semibold">Rating:</label>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setRatings({ ...ratings, [member._id]: star })}
-                          className={`text-2xl ${
-                            ratings[member._id] >= star ? 'text-yellow-500' : 'text-gray-300'
-                          } hover:text-yellow-400`}
-                        >
-                          ★
-                        </button>
-                      ))}
-                    </div>
-                    {ratings[member._id] && (
-                      <span className="text-sm text-gray-600 ml-2">{ratings[member._id]}/5</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex gap-2 mt-6">

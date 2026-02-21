@@ -17,6 +17,17 @@ export const AuthProvider = ({ children }) => {
       initSocket(JSON.parse(userData).id);
     }
     setLoading(false);
+
+    // Listen for user updates
+    const handleUserUpdate = () => {
+      const updatedUser = localStorage.getItem('user');
+      if (updatedUser) {
+        setUser(JSON.parse(updatedUser));
+      }
+    };
+
+    window.addEventListener('userUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userUpdated', handleUserUpdate);
   }, []);
 
   const login = async (identifier, password) => {

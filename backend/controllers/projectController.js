@@ -26,7 +26,7 @@ exports.getProjects = async (req, res) => {
   try {
     const { skills, role, category, status } = req.query;
     
-    const query = {};
+    const query = { deletedAt: null };
     
     if (skills) {
       const skillArray = skills.split(',');
@@ -41,16 +41,25 @@ exports.getProjects = async (req, res) => {
       query.category = category;
     }
     
-    if (status) {
+    if (status && status !== '') {
       query.status = status;
-    } else {
+    } else if (status === undefined) {
       query.status = 'Open';
     }
+    
+    console.log('getProjects query:', JSON.stringify(query));
+    console.log('status param:', status);
     
     const projects = await Project.find(query)
       .populate('host', 'username profile.name')
       .populate('members', 'username profile.name')
       .sort('-createdAt');
+    
+    console.log(`Found ${projects.length} projects`);
+    console.log('Projects by status:', projects.reduce((acc, p) => {
+      acc[p.status] = (acc[p.status] || 0) + 1;
+      return acc;
+    }, {}));
     
     res.json(projects);
   } catch (error) {
@@ -117,7 +126,10 @@ exports.deleteProject = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
-    // Notify all members
+    project.status = 'Terminated';
+    project.deletedAt = new Date();
+    await project.save();
+    
     for (const memberId of project.members) {
       if (memberId.toString() !== req.user._id.toString()) {
         await Notification.create({
@@ -127,15 +139,13 @@ exports.deleteProject = async (req, res) => {
           message: `The project "${project.title}" has been terminated by the host`,
           link: '/dashboard'
         });
-        
-        await User.findByIdAndUpdate(memberId, {
-          $inc: { activeProjectCount: -1 },
-          $pull: { currentProjects: project._id }
-        });
       }
+      
+      await User.findByIdAndUpdate(memberId, {
+        $inc: { activeProjectCount: -1 },
+        $pull: { currentProjects: project._id, completedProjects: project._id }
+      });
     }
-    
-    await Project.findByIdAndDelete(req.params.id);
     
     res.json({ message: 'Project terminated successfully' });
   } catch (error) {
@@ -148,11 +158,24 @@ exports.removeMember = async (req, res) => {
     const { memberId, reason } = req.body;
     const project = await Project.findById(req.params.id);
     
-    if (!project || project.host.toString() !== req.user._id.toString()) {
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    if (project.host.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
-    project.members = project.members.filter(m => m.toString() !== memberId);
+    if (memberId.toString() === project.host.toString()) {
+      return res.status(400).json({ message: 'Cannot remove project host' });
+    }
+    
+    const memberExists = project.members.some(m => m.toString() === memberId.toString());
+    if (!memberExists) {
+      return res.status(404).json({ message: 'Member not found in project' });
+    }
+    
+    project.members = project.members.filter(m => m.toString() !== memberId.toString());
     await project.save();
     
     await User.findByIdAndUpdate(memberId, {
@@ -160,26 +183,19 @@ exports.removeMember = async (req, res) => {
       $pull: { currentProjects: project._id }
     });
     
-    if (reason && reason.trim()) {
-      await Notification.create({
-        recipient: memberId,
-        type: 'project_update',
-        title: 'Removed from Project',
-        message: `You have been removed from "${project.title}". Reason: ${reason}`,
-        link: '/dashboard'
-      });
-    } else {
-      await Notification.create({
-        recipient: memberId,
-        type: 'project_update',
-        title: 'Removed from Project',
-        message: `You have been removed from "${project.title}"`,
-        link: '/dashboard'
-      });
-    }
+    await Notification.create({
+      recipient: memberId,
+      type: 'project_update',
+      title: 'Removed from Project',
+      message: reason && reason.trim() 
+        ? `You have been removed from "${project.title}". Reason: ${reason}`
+        : `You have been removed from "${project.title}"`,
+      link: '/dashboard'
+    });
     
     res.json({ message: 'Member removed successfully' });
   } catch (error) {
+    console.error('Remove member error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -190,6 +206,10 @@ exports.applyToProject = async (req, res) => {
     
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    if (project.members.length >= project.teamSize) {
+      return res.status(400).json({ message: 'Project is full. No slots remaining.' });
     }
     
     if (project.members.includes(req.user._id)) {
@@ -229,6 +249,10 @@ exports.handleApplication = async (req, res) => {
     
     if (!project || project.host.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    if (action === 'accept' && project.members.length >= project.teamSize) {
+      return res.status(400).json({ message: 'Project is full. Cannot accept more members.' });
     }
     
     const application = project.applications.find(
@@ -289,6 +313,7 @@ exports.getRecommendations = async (req, res) => {
     
     const projects = await Project.find({
       status: 'Open',
+      deletedAt: null,
       host: { $ne: req.user._id },
       members: { $nin: [req.user._id] },
       $or: [
@@ -322,16 +347,20 @@ exports.sendInvitation = async (req, res) => {
       return res.status(400).json({ message: 'User is already a member' });
     }
     
-    if (!project.invitations) {
+    // Initialize invitations array if it doesn't exist
+    if (!project.invitations || !Array.isArray(project.invitations)) {
       project.invitations = [];
     }
     
-    const existingInvite = project.invitations.find(inv => inv.user.toString() === userId);
+    const existingInvite = project.invitations.find(
+      inv => inv.user && inv.user.toString() === userId && inv.status === 'Pending'
+    );
+    
     if (existingInvite) {
       return res.status(400).json({ message: 'Invitation already sent' });
     }
     
-    project.invitations.push({ user: userId });
+    project.invitations.push({ user: userId, status: 'Pending' });
     await project.save();
     
     await Notification.create({
@@ -339,7 +368,8 @@ exports.sendInvitation = async (req, res) => {
       type: 'invitation',
       title: 'Project Invitation',
       message: `You have been invited to join "${project.title}"`,
-      link: `/projects/${project._id}`
+      link: `/notifications`,
+      relatedProject: project._id
     });
     
     res.json({ message: 'Invitation sent successfully' });
@@ -358,33 +388,60 @@ exports.respondToInvitation = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
     
-    const invitation = project.invitations.find(inv => inv.user.toString() === req.user._id.toString());
+    if (action === 'accept' && project.members.length >= project.teamSize) {
+      return res.status(400).json({ message: 'Project is full. Cannot join.' });
+    }
+    
+    // Initialize invitations array if it doesn't exist
+    if (!project.invitations || !Array.isArray(project.invitations)) {
+      project.invitations = [];
+    }
+    
+    const invitation = project.invitations.find(
+      inv => inv.user && inv.user.toString() === req.user._id.toString() && inv.status === 'Pending'
+    );
+    
     if (!invitation) {
-      return res.status(404).json({ message: 'Invitation not found' });
+      return res.status(404).json({ message: 'Invitation not found or already responded' });
     }
     
     invitation.status = action === 'accept' ? 'Accepted' : 'Rejected';
     
     if (action === 'accept') {
-      project.members.push(req.user._id);
+      // Add member directly to the project
+      if (!project.members.some(m => m.toString() === req.user._id.toString())) {
+        project.members.push(req.user._id);
+      }
+      
       await User.findByIdAndUpdate(req.user._id, {
         $inc: { activeProjectCount: 1, selectionFrequency: 1 },
-        $push: { currentProjects: project._id }
+        $addToSet: { currentProjects: project._id }
+      });
+      
+      // Notify host
+      await Notification.create({
+        recipient: project.host,
+        type: 'invitation_response',
+        title: 'Invitation Accepted',
+        message: `${req.user.profile.name} accepted your invitation to ${project.title}`,
+        link: `/projects/${project._id}`
+      });
+    } else {
+      // Notify host of rejection
+      await Notification.create({
+        recipient: project.host,
+        type: 'invitation_response',
+        title: 'Invitation Rejected',
+        message: `${req.user.profile.name} rejected your invitation to ${project.title}`,
+        link: `/projects/${project._id}`
       });
     }
     
     await project.save();
     
-    await Notification.create({
-      recipient: project.host,
-      type: 'invitation_response',
-      title: `Invitation ${action}ed`,
-      message: `${req.user.profile.name} ${action}ed your invitation to ${project.title}`,
-      link: `/projects/${project._id}`
-    });
-    
-    res.json({ message: `Invitation ${action}ed` });
+    res.json({ message: `Invitation ${action}ed successfully`, project });
   } catch (error) {
+    console.error('Respond to invitation error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -407,23 +464,69 @@ exports.rateMembers = async (req, res) => {
       if (!user) continue;
       
       const existingRating = project.memberRatings.find(r => r.user.toString() === userId);
-      if (existingRating) {
-        existingRating.rating = rating;
-      } else {
+      
+      if (!existingRating) {
         project.memberRatings.push({ user: userId, rating });
+        
+        const currentTotalRatings = user.totalRatings || 0;
+        const currentScore = user.contributionScore || 3.0;
+        
+        // Calculate new average: (sum of all previous ratings + new rating) / total ratings
+        // currentScore * currentTotalRatings = sum of all previous ratings
+        const totalRatingSum = (currentScore * currentTotalRatings) + rating;
+        const newTotalRatings = currentTotalRatings + 1;
+        const newScore = totalRatingSum / newTotalRatings;
+        
+        user.contributionScore = newScore;
+        user.totalRatings = newTotalRatings;
+        await user.save();
+        
+        await Notification.create({
+          recipient: userId,
+          type: 'project_update',
+          title: 'You Received a Rating',
+          message: `You received a ${rating}/5 rating for your contribution in "${project.title}"`,
+          link: `/profile`
+        });
       }
-      
-      const newTotalRatings = user.totalRatings + 1;
-      const newScore = ((user.contributionScore * user.totalRatings) + rating) / newTotalRatings;
-      
-      await User.findByIdAndUpdate(userId, {
-        contributionScore: newScore,
-        totalRatings: newTotalRatings
-      });
     }
     
     await project.save();
     res.json({ message: 'Ratings submitted successfully' });
+  } catch (error) {
+    console.error('Rating error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.endProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project || project.host.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    project.status = 'Completed';
+    await project.save();
+    
+    for (const memberId of project.members) {
+      await User.findByIdAndUpdate(memberId, {
+        $inc: { completedProjectsCount: 1, activeProjectCount: -1 },
+        $pull: { currentProjects: project._id },
+        $addToSet: { completedProjects: project._id }
+      });
+      
+      await Notification.create({
+        recipient: memberId,
+        type: 'project_update',
+        title: 'Project Completed',
+        message: `The project "${project.title}" has been marked as completed. The host can now rate your contribution.`,
+        link: `/projects/${project._id}`
+      });
+    }
+    
+    res.json({ message: 'Project ended successfully', project });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

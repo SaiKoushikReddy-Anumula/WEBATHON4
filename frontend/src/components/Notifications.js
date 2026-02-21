@@ -28,7 +28,8 @@ const Notifications = () => {
     try {
       const { data } = await api.get('/notifications');
       setNotifications(data);
-      setUnreadCount(data.filter(n => !n.read).length);
+      // Since backend now marks all as read when fetching, set count to 0
+      setUnreadCount(0);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }

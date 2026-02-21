@@ -20,7 +20,8 @@ const projectSchema = new mongoose.Schema({
   
   deadline: { type: Date, required: true },
   weeklyCommitment: { type: String, required: true },
-  status: { type: String, enum: ['Open', 'In Progress', 'Completed'], default: 'Open' },
+  status: { type: String, enum: ['Open', 'In Progress', 'Completed', 'Terminated'], default: 'Open' },
+  deletedAt: { type: Date, default: null },
   
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   memberRatings: [{

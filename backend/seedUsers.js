@@ -12,13 +12,11 @@ const users = [
     isVerified: true,
     profile: {
       name: "User One",
-      profilePicture: "",
       branch: "CSE",
       year: "3rd Year",
       bio: "Full stack developer interested in civic platforms.",
       skills: [
         { name: "React", proficiency: "Advanced" },
-        { name: "Node.js", proficiency: "Advanced" },
         { name: "MongoDB", proficiency: "Intermediate" }
       ],
       interests: ["Civic Tech", "Web Apps"],
@@ -38,13 +36,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Two",
-      profilePicture: "",
       branch: "IT",
       year: "2nd Year",
       bio: "UI/UX designer for social impact projects.",
       skills: [
-        { name: "Figma", proficiency: "Advanced" },
-        { name: "UI/UX", proficiency: "Intermediate" }
+        { name: "UI/UX", proficiency: "Advanced" },
+        { name: "React", proficiency: "Beginner" }
       ],
       interests: ["Design", "Social Impact"],
       workExperience: [],
@@ -63,13 +60,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Three",
-      profilePicture: "",
       branch: "CSE",
       year: "4th Year",
       bio: "Backend developer focused on scalable systems.",
       skills: [
-        { name: "Java", proficiency: "Advanced" },
-        { name: "Spring Boot", proficiency: "Intermediate" }
+        { name: "Node.js", proficiency: "Advanced" },
+        { name: "MongoDB", proficiency: "Advanced" }
       ],
       interests: ["Backend", "Civic Platforms"],
       workExperience: [],
@@ -88,7 +84,6 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Four",
-      profilePicture: "",
       branch: "CSE",
       year: "3rd Year",
       bio: "Machine learning enthusiast for AgriTech.",
@@ -113,13 +108,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Five",
-      profilePicture: "",
       branch: "IT",
       year: "2nd Year",
       bio: "Cloud and DevOps learner.",
       skills: [
-        { name: "AWS", proficiency: "Intermediate" },
-        { name: "Docker", proficiency: "Intermediate" }
+        { name: "SQL", proficiency: "Intermediate" },
+        { name: "Data Analysis", proficiency: "Intermediate" }
       ],
       interests: ["Cloud", "Supply Chain"],
       workExperience: [],
@@ -138,13 +132,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Six",
-      profilePicture: "",
       branch: "CSE",
       year: "3rd Year",
       bio: "Data analytics student.",
       skills: [
-        { name: "Data Analysis", proficiency: "Intermediate" },
-        { name: "SQL", proficiency: "Intermediate" }
+        { name: "Data Analysis", proficiency: "Advanced" },
+        { name: "Python", proficiency: "Intermediate" }
       ],
       interests: ["Data", "AgriTech"],
       workExperience: [],
@@ -163,13 +156,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Seven",
-      profilePicture: "",
       branch: "CSE",
       year: "2nd Year",
       bio: "Mobile developer for civic applications.",
       skills: [
-        { name: "Flutter", proficiency: "Intermediate" },
-        { name: "Firebase", proficiency: "Intermediate" }
+        { name: "React", proficiency: "Intermediate" },
+        { name: "UI/UX", proficiency: "Intermediate" }
       ],
       interests: ["Mobile Apps", "Civic Tech"],
       workExperience: [],
@@ -188,7 +180,6 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Eight",
-      profilePicture: "",
       branch: "CSE",
       year: "4th Year",
       bio: "Algorithm and optimization enthusiast.",
@@ -213,12 +204,11 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Nine",
-      profilePicture: "",
       branch: "ECE",
       year: "3rd Year",
       bio: "IoT enthusiast for smart systems.",
       skills: [
-        { name: "Arduino", proficiency: "Intermediate" },
+        { name: "Arduino", proficiency: "Advanced" },
         { name: "Sensors", proficiency: "Intermediate" }
       ],
       interests: ["Smart Infrastructure", "AgriTech"],
@@ -238,13 +228,12 @@ const users = [
     isVerified: true,
     profile: {
       name: "User Ten",
-      profilePicture: "",
       branch: "IT",
       year: "2nd Year",
       bio: "Interested in documentation and coordination.",
       skills: [
-        { name: "Communication", proficiency: "Advanced" },
-        { name: "Project Management", proficiency: "Intermediate" }
+        { name: "UI/UX", proficiency: "Intermediate" },
+        { name: "Project Management", proficiency: "Advanced" }
       ],
       interests: ["Leadership", "Campus Projects"],
       workExperience: [],

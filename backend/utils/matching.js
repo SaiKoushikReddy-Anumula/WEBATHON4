@@ -76,7 +76,7 @@ const findMatchingCandidates = async (project, limit = 10) => {
     });
   
   return scoredUsers
-    .filter(s => s.score > 0.3)
+    .filter(s => s.score > 0.1)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 };

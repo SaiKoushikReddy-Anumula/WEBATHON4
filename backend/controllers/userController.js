@@ -10,6 +10,13 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Calculate actual active project count from currentProjects array
+    const actualActiveCount = user.currentProjects?.length || 0;
+    if (user.activeProjectCount !== actualActiveCount) {
+      user.activeProjectCount = actualActiveCount;
+      await user.save();
+    }
+    
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });

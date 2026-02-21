@@ -22,7 +22,17 @@ const Profile = () => {
 
   useEffect(() => {
     if (user?.profile) {
-      setProfile(user.profile);
+      setProfile({
+        name: user.profile.name || '',
+        profilePicture: user.profile.profilePicture || '',
+        branch: user.profile.branch || '',
+        year: user.profile.year || '',
+        bio: user.profile.bio || '',
+        skills: user.profile.skills || [],
+        interests: user.profile.interests || [],
+        workExperience: user.profile.workExperience || [],
+        availability: user.profile.availability || 'Available'
+      });
     }
   }, [user]);
 
@@ -32,10 +42,34 @@ const Profile = () => {
       setUser(data);
       localStorage.setItem('user', JSON.stringify(data));
       setEditing(false);
+      alert('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
+      alert('Failed to update profile');
     }
   };
+
+  const refreshUserData = async () => {
+    try {
+      const { data } = await api.get('/users/profile');
+      setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    refreshUserData();
+
+    // Listen for user updates from other components
+    const handleUserUpdate = () => {
+      refreshUserData();
+    };
+
+    window.addEventListener('userUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userUpdated', handleUserUpdate);
+  }, []);
 
   const addSkill = () => {
     if (newSkill.name) {
@@ -55,17 +89,17 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50 p-6">
       <div className="container mx-auto max-w-4xl">
-        <button onClick={() => navigate(-1)} className="mb-4 text-gray-600 hover:text-blue-600 flex items-center">
+        <button onClick={() => navigate(-1)} className="mb-4 text-slate-600 hover:text-blue-600 flex items-center font-medium">
           ← Back
         </button>
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">My Profile</h2>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">My Profile</h2>
             <button
               onClick={() => editing ? handleSave() : setEditing(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl hover:shadow-lg transition-all"
             >
               {editing ? 'Save' : 'Edit'}
             </button>
@@ -74,7 +108,7 @@ const Profile = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-6">
               <div className="relative">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
                   {profile.profilePicture ? (
                     <img src={profile.profilePicture} alt="Profile" className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -85,13 +119,13 @@ const Profile = () => {
               <div className="flex-1">
                 {editing && (
                   <div>
-                    <label className="block text-gray-700 font-semibold mb-2">Profile Picture</label>
+                    <label className="block text-slate-700 font-semibold mb-2">Profile Picture</label>
                     <input
                       type="text"
                       value={profile.profilePicture}
                       onChange={(e) => setProfile({ ...profile, profilePicture: e.target.value })}
                       placeholder="https://example.com/image.jpg"
-                      className="w-full px-3 py-2 border rounded-lg mb-2"
+                      className="w-full px-3 py-2 border border-blue-200 rounded-xl mb-2"
                     />
                     <input
                       type="file"
@@ -106,65 +140,65 @@ const Profile = () => {
                           reader.readAsDataURL(file);
                         }
                       }}
-                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-blue-200 rounded-xl text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Upload image or paste URL</p>
+                    <p className="text-xs text-slate-500 mt-1">Upload image or paste URL</p>
                   </div>
                 )}
               </div>
             </div>
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Name</label>
+              <label className="block text-slate-700 font-semibold mb-2">Name</label>
               <input
                 type="text"
                 value={profile.name}
                 onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 disabled={!editing}
-                className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-blue-200 rounded-xl disabled:bg-slate-100"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Branch</label>
+                <label className="block text-slate-700 font-semibold mb-2">Branch</label>
                 <input
                   type="text"
                   value={profile.branch}
                   onChange={(e) => setProfile({ ...profile, branch: e.target.value })}
                   disabled={!editing}
-                  className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-blue-200 rounded-xl disabled:bg-slate-100"
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Year</label>
+                <label className="block text-slate-700 font-semibold mb-2">Year</label>
                 <input
                   type="text"
                   value={profile.year}
                   onChange={(e) => setProfile({ ...profile, year: e.target.value })}
                   disabled={!editing}
-                  className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-blue-200 rounded-xl disabled:bg-slate-100"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Bio</label>
+              <label className="block text-slate-700 font-semibold mb-2">Bio</label>
               <textarea
                 value={profile.bio}
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 disabled={!editing}
                 rows="4"
-                className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-blue-200 rounded-xl disabled:bg-slate-100"
               />
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Availability</label>
+              <label className="block text-slate-700 font-semibold mb-2">Availability</label>
               <select
                 value={profile.availability}
                 onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
                 disabled={!editing}
-                className="w-full px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-blue-200 rounded-xl disabled:bg-slate-100"
               >
                 <option value="Available">Available</option>
                 <option value="Limited">Limited</option>
@@ -173,12 +207,12 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-gray-700 font-semibold mb-2">Skills</label>
+              <label className="block text-slate-700 font-semibold mb-2">Skills</label>
               <div className="space-y-2">
                 {profile.skills?.map((skill, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-gray-100 p-2 rounded">
-                    <span className="flex-1">{skill.name}</span>
-                    <span className="text-sm text-gray-600">{skill.proficiency}</span>
+                  <div key={index} className="flex items-center gap-2 bg-blue-50 p-2 rounded-xl border border-blue-100">
+                    <span className="flex-1 text-slate-800">{skill.name}</span>
+                    <span className="text-sm text-slate-600">{skill.proficiency}</span>
                     {editing && (
                       <button
                         onClick={() => removeSkill(index)}
@@ -198,12 +232,12 @@ const Profile = () => {
                     placeholder="Skill name"
                     value={newSkill.name}
                     onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-                    className="flex-1 px-3 py-2 border rounded-lg"
+                    className="flex-1 px-3 py-2 border border-blue-200 rounded-xl"
                   />
                   <select
                     value={newSkill.proficiency}
                     onChange={(e) => setNewSkill({ ...newSkill, proficiency: e.target.value })}
-                    className="px-3 py-2 border rounded-lg"
+                    className="px-3 py-2 border border-blue-200 rounded-xl"
                   >
                     <option value="Beginner">Beginner</option>
                     <option value="Intermediate">Intermediate</option>
@@ -211,7 +245,7 @@ const Profile = () => {
                   </select>
                   <button
                     onClick={addSkill}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                    className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
                   >
                     Add
                   </button>
@@ -219,12 +253,12 @@ const Profile = () => {
               )}
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-semibold mb-2">Statistics</h3>
-              <p>⭐ Contribution Score: {user?.contributionScore?.toFixed(1) || '3.0'}/5.0 ({user?.totalRatings || 0} ratings)</p>
-              <p>📊 Active Projects: {user?.activeProjectCount || 0}</p>
-              <p>✅ Completed Projects: {user?.completedProjectsCount || 0}</p>
-              <p>🎯 Selection Frequency: {user?.selectionFrequency || 0}</p>
+            <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <h3 className="font-semibold mb-2 text-slate-800">Statistics</h3>
+              <p className="text-slate-700">⭐ Contribution Score: {user?.contributionScore || 3.0}/5.0 ({user?.totalRatings || 0} ratings)</p>
+              <p className="text-slate-700">📊 Active Projects: {user?.activeProjectCount || 0}</p>
+              <p className="text-slate-700">✅ Completed Projects: {user?.completedProjectsCount || 0}</p>
+              <p className="text-slate-700">🎯 Selection Frequency: {user?.selectionFrequency || 0}</p>
             </div>
           </div>
         </div>
