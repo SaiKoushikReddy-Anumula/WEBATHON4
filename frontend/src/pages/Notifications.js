@@ -155,7 +155,7 @@ const Notifications = () => {
                   <div className="flex gap-2">
                     {notif.link && (
                       <Link
-                        to={notif.link}
+                        to={notif.link.replace(/\/applications$/, '')}
                         className="text-blue-600 hover:text-blue-800 text-sm"
                       >
                         View

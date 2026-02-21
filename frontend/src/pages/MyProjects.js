@@ -6,6 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 const MyProjects = () => {
   const [projects, setProjects] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -31,9 +32,20 @@ const MyProjects = () => {
     }
   }, [user]);
 
+  const fetchUnreadCount = React.useCallback(async () => {
+    try {
+      const { data } = await api.get('/notifications');
+      const unread = data.filter(n => !n.read).length;
+      setUnreadCount(unread);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMyProjects();
-  }, [fetchMyProjects]);
+    fetchUnreadCount();
+  }, [fetchMyProjects, fetchUnreadCount]);
 
   const activeProjects = projects.filter(p => p.status !== 'Completed' && p.status !== 'Terminated');
   const completedProjects = projects.filter(p => p.status === 'Completed');
@@ -56,12 +68,17 @@ const MyProjects = () => {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium relative"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
               <span>Menu</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
             </button>
 
             {menuOpen && (
@@ -74,9 +91,17 @@ const MyProjects = () => {
                   <span className="text-xl">👤</span>
                   <span>Profile</span>
                 </Link>
-                <Link to="/notifications" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
+                <Link to="/notifications" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium relative">
                   <span className="text-xl">🔔</span>
                   <span>Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 left-8 bg-red-500 rounded-full w-2 h-2 animate-pulse"></span>
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <Link to="/search-users" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
                   <span className="text-xl">🔍</span>
