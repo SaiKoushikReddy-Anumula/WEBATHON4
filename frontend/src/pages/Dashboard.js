@@ -8,7 +8,6 @@ const Dashboard = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [filters, setFilters] = useState({ skills: '', category: '', role: '' });
   const [unreadCount, setUnreadCount] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
 
   useEffect(() => {
@@ -51,212 +50,211 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
-      {/* Modern Navbar */}
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/90 border-b border-blue-100 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 relative">
-          <div className="flex justify-between items-center">
-            {/* Logo - Left */}
-            <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all duration-300 relative overflow-visible">
-                <div className="relative flex items-center justify-center">
-                  <span className="text-white text-xs opacity-60 absolute -left-2 top-0.5 z-0">👤</span>
-                  <span className="text-white text-base z-10">👤</span>
-                  <span className="text-white text-xs opacity-60 absolute -right-2 top-0.5 z-0">👤</span>
-                </div>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Smart Campus</span>
-            </Link>
+    <div className="min-h-screen bg-slate-50 relative pb-12">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-500 rounded-b-[4rem] z-0 opacity-90 overflow-hidden">
+        <div className="absolute top-10 left-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="absolute top-40 right-20 w-80 h-80 bg-pink-400 opacity-20 rounded-full blur-3xl mix-blend-overlay"></div>
+      </div>
 
-            {/* Menu Button - Rightmost */}
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium relative"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-                <span>Menu</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Dropdown Menu - Vertically below menu button */}
-              {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 space-y-2 animate-fade-in bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-blue-100">
-              <Link to="/notifications" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium relative">
-                <span className="text-xl">🔔</span>
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="absolute top-2 left-8 bg-red-500 rounded-full w-2 h-2 animate-pulse"></span>
-                )}
-                {unreadCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </Link>
-              <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                <span className="text-xl">👤</span>
-                <span>Profile</span>
-              </Link>
-              <Link to="/my-projects" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                <span className="text-xl">📁</span>
-                <span>My Projects</span>
-              </Link>
-              <Link to="/search-users" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                <span className="text-xl">🔍</span>
-                <span>Search Users</span>
-              </Link>
-              <Link to="/create-project" className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
-                <span className="text-xl">➕</span>
-                <span>Create Project</span>
-              </Link>
-              <button
-                onClick={() => {
-                  logout();
-                  window.location.href = '/login';
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-600 hover:text-white transition-all"
-              >
-                <span className="text-xl">🚪</span>
-                <span>Logout</span>
-              </button>
-                </div>
+      <nav className="sticky top-4 z-50 mx-4 md:mx-auto max-w-7xl glass rounded-2xl px-6 py-4 shadow-sm border border-white/50 animate-fade-in-up">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-extrabold tracking-tight text-gradient">Smart Campus</h1>
+          <div className="hidden md:flex gap-6 items-center">
+            <Link to="/notifications" className="relative text-slate-600 hover:text-indigo-600 font-medium transition-colors flex items-center gap-1 group">
+              <span className="text-xl group-hover:animate-bounce">🔔</span>
+              <span>Alerts</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-red-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg shadow-red-500/30">
+                  {unreadCount}
+                </span>
               )}
-            </div>
+            </Link>
+            <Link to="/profile" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Profile</Link>
+            <Link to="/my-projects" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">My Projects</Link>
+            <Link to="/search-users" className="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Network</Link>
+            <Link to="/create-project" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5 ml-2">
+              Create Project
+            </Link>
+            <button
+              onClick={() => {
+                logout();
+                window.location.href = '/login';
+              }}
+              className="bg-white text-slate-700 border border-slate-200 px-5 py-2.5 rounded-xl hover:bg-slate-50 hover:text-red-500 hover:border-red-200 transition-all duration-300 font-medium shadow-sm ml-2"
+            >
+              Logout
+            </button>
           </div>
+          {/* Mobile menu button (placeholder) */}
+          <button className="md:hidden text-slate-800 text-2xl">☰</button>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <div className="mb-12 animate-fade-in">
-          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Welcome back, {user?.profile?.name}!
-          </h2>
-          <p className="text-slate-600 text-lg">Discover and collaborate on amazing projects</p>
-        </div>
-          
-        {/* Search Filters */}
-        <form onSubmit={handleSearch} className="mb-12 bg-white/80 backdrop-blur-sm p-8 rounded-2xl border border-blue-100 shadow-xl animate-fade-in">
-          <h3 className="text-xl font-semibold mb-6 text-slate-800">🔍 Find Projects</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <input
-              type="text"
-              placeholder="Skills (e.g., React, Python)"
-              value={filters.skills}
-              onChange={(e) => setFilters({ ...filters, skills: e.target.value })}
-              className="px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            />
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            >
-              <option value="">All Categories</option>
-              <option value="Hackathon">Hackathon</option>
-              <option value="Research">Research</option>
-              <option value="Startup">Startup</option>
-              <option value="Academic">Academic</option>
-            </select>
-            <select
-              value={filters.role}
-              onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-              className="px-4 py-3 bg-white border border-blue-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            >
-              <option value="">All Roles</option>
-              <option value="Backend Developer">Backend Developer</option>
-              <option value="Frontend Developer">Frontend Developer</option>
-              <option value="Full Stack Developer">Full Stack Developer</option>
-              <option value="Guide">Guide</option>
-              <option value="Designer">Designer</option>
-              <option value="ML Engineer">ML Engineer</option>
-              <option value="Others">Others</option>
-            </select>
+      <div className="container mx-auto px-4 relative z-10 pt-10">
+        <div className="mb-10 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="text-white mb-8">
+            <h2 className="text-4xl font-extrabold mb-2 text-shadow-sm">Welcome back, {user?.profile?.name?.split(' ')[0] || 'Explorer'}! 👋</h2>
+            <p className="text-indigo-100 text-lg max-w-2xl">Discover exciting projects, connect with talented peers, and bring your ideas to life.</p>
           </div>
-          <button
-            type="submit"
-            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 hover:scale-105"
-          >
-            Search Projects
-          </button>
-        </form>
 
-        {/* Recommendations */}
+          <form onSubmit={handleSearch} className="glass-card p-3 rounded-2xl shadow-xl border border-white/60">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1 relative">
+                <span className="absolute left-4 top-3.5 text-slate-400">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Keywords or skills (e.g. React, Node...)"
+                  value={filters.skills}
+                  onChange={(e) => setFilters({ ...filters, skills: e.target.value })}
+                  className="w-full pl-11 pr-4 py-3 bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                />
+              </div>
+              <div className="md:w-48">
+                <select
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-700 font-medium transition-all"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Hackathon">Hackathon</option>
+                  <option value="Research">Research</option>
+                  <option value="Startup">Startup</option>
+                  <option value="Academic">Academic</option>
+                </select>
+              </div>
+              <div className="md:w-56">
+                <select
+                  value={filters.role}
+                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                  className="w-full px-4 py-3 bg-white/60 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-slate-700 font-medium transition-all"
+                >
+                  <option value="">All Roles</option>
+                  <option value="Backend Developer">Backend</option>
+                  <option value="Frontend Developer">Frontend</option>
+                  <option value="Full Stack Developer">Full Stack</option>
+                  <option value="Designer">UI/UX Designer</option>
+                  <option value="ML Engineer">ML/AI Engineer</option>
+                  <option value="Guide">Mentor/Guide</option>
+                  <option value="Others">Others</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="bg-slate-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-slate-800 transition-colors shadow-md hover:shadow-lg"
+              >
+                Search
+              </button>
+            </div>
+          </form>
+        </div>
+
         {recommendations.length > 0 && (
-          <div className="mb-12 animate-fade-in">
-            <h3 className="text-2xl font-bold mb-6 text-slate-800">✨ Recommended for You</h3>
+          <div className="mb-12 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                <span className="text-yellow-500">✨</span> Recommended for You
+              </h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recommendations.map((project) => (
-                <ProjectCard key={project._id} project={project} />
+              {recommendations.map((project, idx) => (
+                <div key={project._id} className="animate-fade-in-up" style={{ animationDelay: `${0.3 + (idx * 0.1)}s` }}>
+                  <ProjectCard project={project} featured />
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* All Projects */}
-        <div className="animate-fade-in">
-          <h3 className="text-2xl font-bold mb-6 text-slate-800">🚀 All Open Projects</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectCard key={project._id} project={project} />
-            ))}
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-bold text-slate-800 tracking-tight">Explore Open Projects</h3>
+            <span className="text-sm font-medium text-slate-500 bg-slate-200/50 px-3 py-1 rounded-full">{projects.length} found</span>
           </div>
+
+          {projects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project, idx) => (
+                <div key={project._id} className="animate-fade-in-up" style={{ animationDelay: `${0.1 + (idx * 0.05)}s` }}>
+                  <ProjectCard project={project} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">No projects found</h3>
+              <p className="text-slate-500 max-w-md mx-auto">Try adjusting your filters or use different keywords to find what you're looking for.</p>
+              <button
+                onClick={() => { setFilters({ skills: '', category: '', role: '' }); fetchProjects(); }}
+                className="mt-6 text-indigo-600 font-medium hover:underline"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, featured = false }) => {
   const totalSlots = project.teamSize;
   const filledSlots = project.members?.length || 0;
   const slotsLeft = totalSlots - filledSlots;
-  
+  const percentageFilled = Math.min(100, (filledSlots / totalSlots) * 100);
+
   return (
-    <Link 
-      to={`/projects/${project._id}`} 
-      className="group bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-blue-100 hover:border-blue-400 shadow-lg hover:shadow-blue-200 transition-all duration-300 hover:scale-105"
+    <Link
+      to={`/projects/${project._id}`}
+      className={`block bg-white rounded-2xl p-6 transition-all duration-300 transform hover:-translate-y-1 ${featured
+          ? 'border-2 border-indigo-100 shadow-xl shadow-indigo-100'
+          : 'border border-slate-100 shadow-md hover:shadow-xl hover:border-indigo-100'
+        }`}
     >
-      <h4 className="text-xl font-bold mb-3 text-slate-800 group-hover:text-blue-600 transition-colors">
-        {project.title}
-      </h4>
-      <p className="text-slate-600 text-sm mb-4 line-clamp-2">
-        {project.description.substring(0, 100)}...
-      </p>
-      <div className="flex flex-wrap gap-2 mb-4">
-        <span className="bg-blue-500/20 text-blue-600 text-xs px-3 py-1 rounded-lg font-medium border border-blue-500/30">
+      <div className="flex justify-between items-start mb-4">
+        <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
           {project.category}
         </span>
-        <span className={`text-xs px-3 py-1 rounded-lg font-semibold border ${
-          slotsLeft === 0 
-            ? 'bg-red-500/20 text-red-600 border-red-500/30' 
-            : 'bg-green-500/20 text-green-600 border-green-500/30'
-        }`}>
-          {slotsLeft === 0 ? '🔴 Full' : `✅ ${slotsLeft} slots`}
+        <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 ${slotsLeft === 0
+            ? 'bg-rose-50 text-rose-600'
+            : 'bg-emerald-50 text-emerald-600'
+          }`}>
+          {slotsLeft === 0 ? 'Full' : `${slotsLeft} Open`}
         </span>
       </div>
-      <div className="mb-3 text-sm">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-slate-600">Team Progress</span>
-          <span className="text-slate-800 font-semibold">{filledSlots}/{totalSlots}</span>
+
+      <h4 className="text-xl font-bold mb-2 text-slate-900 line-clamp-1">{project.title}</h4>
+      <p className="text-slate-600 text-sm mb-6 line-clamp-2 min-h-[40px] leading-relaxed">
+        {project.description}
+      </p>
+
+      <div className="mb-5">
+        <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
+          <span>Team Progress</span>
+          <span>{filledSlots}/{totalSlots} Members</span>
         </div>
-        <div className="w-full bg-blue-100 rounded-full h-2">
-          <div 
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
-            style={{ width: `${(filledSlots / totalSlots) * 100}%` }}
-          />
+        <div className="w-full bg-slate-100 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full ${slotsLeft === 0 ? 'bg-rose-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}
+            style={{ width: `${percentageFilled}%` }}
+          ></div>
         </div>
       </div>
-      <div className="text-sm text-slate-600 space-y-1">
-        <p>👤 Host: {project.host?.profile?.name}</p>
-        <p>📅 Deadline: {new Date(project.deadline).toLocaleDateString()}</p>
+
+      <div className="pt-4 border-t border-slate-100 flex justify-between items-center text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center text-[10px] font-bold">
+            {project.host?.profile?.name?.charAt(0).toUpperCase() || '?'}
+          </div>
+          <span className="text-slate-700 font-medium truncate max-w-[120px]">
+            {project.host?.profile?.name?.split(' ')[0] || 'Unknown'}
+          </span>
+        </div>
+        <span className="text-slate-400 font-medium flex items-center gap-1 text-xs whitespace-nowrap">
+          📅 {new Date(project.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+        </span>
       </div>
     </Link>
   );

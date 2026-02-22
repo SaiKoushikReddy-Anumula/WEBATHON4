@@ -5,195 +5,119 @@ import { AuthContext } from '../context/AuthContext';
 
 const MyProjects = () => {
   const [projects, setProjects] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const { user, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
-  const fetchMyProjects = React.useCallback(async () => {
+  useEffect(() => {
+    fetchMyProjects();
+  }, []);
+
+  const fetchMyProjects = async () => {
     try {
-      const { data } = await api.get('/projects', {
-        params: { status: '' }
-      });
-      
-      const userId = String(user._id || user.id);
-      
-      const myProjects = data.filter(p => {
-        const isMember = p.members.some(m => String(m._id) === userId);
-        const isHost = String(p.host._id) === userId;
-        const notDeleted = !p.deletedAt;
-        
-        return (isMember || isHost) && notDeleted;
-      });
-      
+      const { data } = await api.get('/projects');
+      const myProjects = data.filter(p =>
+        p.members.some(m => m._id === user.id) || p.host._id === user.id
+      );
       setProjects(myProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
     }
-  }, [user]);
-
-  const fetchUnreadCount = React.useCallback(async () => {
-    try {
-      const { data } = await api.get('/notifications');
-      const unread = data.filter(n => !n.read).length;
-      setUnreadCount(unread);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchMyProjects();
-    fetchUnreadCount();
-  }, [fetchMyProjects, fetchUnreadCount]);
-
-  const activeProjects = projects.filter(p => p.status !== 'Completed' && p.status !== 'Terminated');
-  const completedProjects = projects.filter(p => p.status === 'Completed');
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
-      <nav className="sticky top-0 z-50 backdrop-blur-lg bg-white/90 border-b border-blue-100 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center relative">
-            <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-blue-500/50 transition-all duration-300 relative overflow-visible">
-                <div className="relative flex items-center justify-center">
-                  <span className="text-white text-xs opacity-60 absolute -left-2 top-0.5 z-0">👤</span>
-                  <span className="text-white text-base z-10">👤</span>
-                  <span className="text-white text-xs opacity-60 absolute -right-2 top-0.5 z-0">👤</span>
-                </div>
-              </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Smart Campus</span>
-            </Link>
+    <div className="min-h-screen bg-slate-50 relative pb-12">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-80 bg-gradient-to-br from-indigo-600 via-blue-500 to-cyan-500 rounded-b-[4rem] z-0 opacity-90 overflow-hidden">
+        <div className="absolute top-10 right-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl mix-blend-overlay"></div>
+        <div className="absolute bottom-10 left-20 w-80 h-80 bg-cyan-300 opacity-20 rounded-full blur-3xl mix-blend-overlay"></div>
+      </div>
 
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium relative"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-              <span>Menu</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-6 top-full mt-2 w-64 space-y-2 animate-fade-in bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-blue-100">
-                <Link to="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                  <span className="text-xl">🏠</span>
-                  <span>Dashboard</span>
-                </Link>
-                <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                  <span className="text-xl">👤</span>
-                  <span>Profile</span>
-                </Link>
-                <Link to="/notifications" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium relative">
-                  <span className="text-xl">🔔</span>
-                  <span>Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="absolute top-2 left-8 bg-red-500 rounded-full w-2 h-2 animate-pulse"></span>
-                  )}
-                  {unreadCount > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                      {unreadCount}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/search-users" className="flex items-center gap-3 px-4 py-3 text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all font-medium">
-                  <span className="text-xl">🔍</span>
-                  <span>Search Users</span>
-                </Link>
-                <Link to="/create-project" className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
-                  <span className="text-xl">➕</span>
-                  <span>Create Project</span>
-                </Link>
-                <button
-                  onClick={() => { logout(); navigate('/login'); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-600 hover:text-white transition-all"
-                >
-                  <span className="text-xl">🚪</span>
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+      <nav className="sticky top-4 z-50 mx-4 md:mx-auto max-w-7xl glass rounded-2xl px-6 py-4 shadow-sm border border-white/50 animate-fade-in-up">
+        <div className="flex justify-between items-center">
+          <Link to="/dashboard">
+            <h1 className="text-2xl font-extrabold tracking-tight text-gradient cursor-pointer">Smart Campus</h1>
+          </Link>
+          <div className="flex gap-4 items-center">
+            <Link to="/dashboard" className="text-slate-700 hover:text-indigo-600 font-bold transition-colors">Dashboard</Link>
+            <Link to="/profile" className="text-slate-700 hover:text-indigo-600 font-bold transition-colors">Profile</Link>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">My Projects</h2>
-        
+      <div className="container mx-auto max-w-7xl px-4 relative z-10 pt-10 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span className="text-4xl">📚</span> My Projects
+          </h2>
+        </div>
+
         {projects.length === 0 ? (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-8 text-center">
-            <p className="text-slate-600 mb-4">You haven't joined any projects yet</p>
-            <Link to="/dashboard" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-xl hover:shadow-lg inline-block transition-all">
+          <div className="glass-card rounded-3xl p-10 shadow-xl border border-white/60 text-center max-w-2xl mx-auto mt-10">
+            <div className="text-6xl mb-4 opacity-70">🔭</div>
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">You haven't joined any projects yet</h3>
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">Explore available opportunities and start collaborating with peers to build your portfolio.</p>
+            <Link to="/dashboard" className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3.5 rounded-xl hover:shadow-lg shadow-indigo-500/30 font-bold transition-all transform hover:-translate-y-0.5 inline-block">
               Browse Projects
             </Link>
           </div>
         ) : (
-          <>
-            <div className="mb-12">
-              <h3 className="text-2xl font-bold mb-4 text-slate-800">Active Projects</h3>
-              {activeProjects.length === 0 ? (
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-6 text-center">
-                  <p className="text-slate-600">No active projects</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project, idx) => (
+              <Link
+                key={project._id}
+                to={`/projects/${project._id}`}
+                className="glass-card rounded-2xl shadow-sm border border-white/60 hover:shadow-xl hover:border-indigo-200 transition-all p-6 group animate-fade-in-up block"
+                style={{ animationDelay: `${0.1 + (idx * 0.05)}s` }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors leading-tight">
+                    {project.title}
+                  </h3>
+                  {project.host._id === user.id ? (
+                    <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg shadow-sm shrink-0 ml-3">
+                      Host
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg shrink-0 ml-3">
+                      Member
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {activeProjects.map((project) => (
-                    <Link key={project._id} to={`/projects/${project._id}`} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100 hover:border-blue-400 hover:shadow-blue-200 transition-all p-6 hover:scale-105">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-xl font-bold text-slate-800">{project.title}</h3>
-                        {String(project.host._id) === String(user._id || user.id) && (
-                          <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-lg font-medium">Host</span>
-                        )}
-                      </div>
-                      <p className="text-slate-600 text-sm mb-4">{project.description.substring(0, 100)}...</p>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="bg-blue-500/20 text-blue-600 text-xs px-3 py-1 rounded-lg font-medium border border-blue-500/30">{project.category}</span>
-                        <span className="bg-green-500/20 text-green-600 text-xs px-3 py-1 rounded-lg font-medium border border-green-500/30">{project.status}</span>
-                      </div>
-                      <p className="text-sm text-slate-600">Members: {project.members.length}/{project.teamSize}</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            <div>
-              <h3 className="text-2xl font-bold mb-4 text-slate-800">Completed Projects</h3>
-              {completedProjects.length === 0 ? (
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-blue-100 p-6 text-center">
-                  <p className="text-slate-600">No completed projects</p>
+                <p className="text-slate-600 text-sm mb-6 line-clamp-2 leading-relaxed h-10">
+                  {project.description}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="bg-slate-100 text-slate-700 font-bold text-xs px-2.5 py-1 rounded-lg">
+                    {project.category}
+                  </span>
+                  <span className={`text-xs px-2.5 py-1 rounded-lg font-bold border ${project.status === 'Open' ? 'bg-green-50 text-green-700 border-green-200' :
+                    project.status === 'In Progress' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-slate-50 text-slate-700 border-slate-200'
+                    }`}>
+                    {project.status}
+                  </span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {completedProjects.map((project) => (
-                    <Link key={project._id} to={`/projects/${project._id}`} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-green-100 hover:border-green-400 hover:shadow-green-200 transition-all p-6 hover:scale-105">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-xl font-bold text-slate-800">{project.title}</h3>
-                        <div className="flex gap-2">
-                          {String(project.host._id) === String(user._id || user.id) && (
-                            <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-lg font-medium">Host</span>
-                          )}
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-lg font-medium">✓ Done</span>
-                        </div>
-                      </div>
-                      <p className="text-slate-600 text-sm mb-4">{project.description.substring(0, 100)}...</p>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="bg-blue-500/20 text-blue-600 text-xs px-3 py-1 rounded-lg font-medium border border-blue-500/30">{project.category}</span>
-                      </div>
-                      <p className="text-sm text-slate-600">Members: {project.members.length}/{project.teamSize}</p>
-                    </Link>
-                  ))}
+
+                <div className="border-t border-slate-200/60 pt-4 flex items-center justify-between">
+                  <div className="w-full mr-4">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                      <span>Team</span>
+                      <span>{project.members.length}/{project.teamSize}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-1.5 rounded-full ${project.members.length === project.teamSize ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                        style={{ width: `${(project.members.length / project.teamSize) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transform translate-x-3 group-hover:translate-x-0 transition-all font-bold text-xl">
+                    →
+                  </div>
                 </div>
-              )}
-            </div>
-          </>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     </div>
