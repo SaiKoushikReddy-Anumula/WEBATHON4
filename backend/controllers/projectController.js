@@ -285,7 +285,11 @@ exports.getMatchingSuggestions = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
     
-    if (!project || project.host.toString() !== req.user._id.toString()) {
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    if (project.host.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
@@ -293,12 +297,17 @@ exports.getMatchingSuggestions = async (req, res) => {
     
     res.json(candidates);
   } catch (error) {
+    console.error('Matching suggestions error:', error);
     res.status(500).json({ message: error.message });
   }
 };
 
 exports.getRecommendations = async (req, res) => {
   try {
+    if (!req.user.profile || !req.user.profile.skills) {
+      return res.json([]);
+    }
+    
     const userSkills = req.user.profile.skills.map(s => s.name);
     const userInterests = req.user.profile.interests || [];
     
@@ -317,6 +326,7 @@ exports.getRecommendations = async (req, res) => {
     
     res.json(projects);
   } catch (error) {
+    console.error('Recommendations error:', error);
     res.status(500).json({ message: error.message });
   }
 };

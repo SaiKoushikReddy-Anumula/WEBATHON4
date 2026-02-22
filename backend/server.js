@@ -23,8 +23,11 @@ const io = socketIO(server, {
 
 connectDB();
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -48,11 +51,15 @@ io.on('connection', (socket) => {
   });
   
   socket.on('workspace_message', async (data) => {
-    const { projectId, threadName, content, user } = data;
-    io.to(`workspace_${projectId}`).emit('new_message', {
-      threadName,
-      message: { user, content, timestamp: new Date() }
-    });
+    try {
+      const { projectId, threadName, content, user } = data;
+      io.to(`workspace_${projectId}`).emit('new_message', {
+        threadName,
+        message: { user, content, timestamp: new Date() }
+      });
+    } catch (error) {
+      console.error('Workspace message error:', error);
+    }
   });
   
   socket.on('join_interview', (chatId) => {
@@ -60,20 +67,24 @@ io.on('connection', (socket) => {
   });
   
   socket.on('interview_message', async (data) => {
-    const { chatId, content, sender } = data;
-    
-    const InterviewChat = require('./models/InterviewChat');
-    const chat = await InterviewChat.findById(chatId);
-    
-    if (chat) {
-      chat.messages.push({ sender, content });
-      await chat.save();
+    try {
+      const { chatId, content, sender } = data;
       
-      io.to(`interview_${chatId}`).emit('new_interview_message', {
-        sender,
-        content,
-        timestamp: new Date()
-      });
+      const InterviewChat = require('./models/InterviewChat');
+      const chat = await InterviewChat.findById(chatId);
+      
+      if (chat) {
+        chat.messages.push({ sender, content });
+        await chat.save();
+        
+        io.to(`interview_${chatId}`).emit('new_interview_message', {
+          sender,
+          content,
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Interview message error:', error);
     }
   });
   

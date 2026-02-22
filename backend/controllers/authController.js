@@ -11,6 +11,14 @@ exports.signup = async (req, res) => {
   try {
     const { username, email, password, name } = req.body;
     
+    if (!username || !email || !password || !name) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+    
     console.log('Signup attempt:', { username, email, name });
     
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -26,13 +34,11 @@ exports.signup = async (req, res) => {
       email,
       password,
       verificationToken,
-      isVerified: true, // Auto-verify for testing
+      isVerified: true,
       profile: { name }
     });
     
     console.log('User created successfully:', user.username);
-    
-    // await sendVerificationEmail(email, verificationToken); // Commented for testing
     
     res.status(201).json({
       message: 'User created successfully. You can now login.',
@@ -66,6 +72,10 @@ exports.verifyEmail = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
+    
+    if (!identifier || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
     
     console.log('Login attempt:', { identifier, password: '***' });
     
@@ -112,6 +122,10 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+    
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -134,6 +148,14 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
+    
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
     
     const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
     
